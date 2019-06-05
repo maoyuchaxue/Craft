@@ -209,20 +209,17 @@ int recv_worker(void *arg) {
     return 0;
 }
 
-void client_connect(char *hostname, int port) {
+void client_connect(char *addr, int port) {
     if (!client_enabled) {
         return;
     }
-    struct hostent *host;
+
     struct sockaddr_in address;
-    if ((host = gethostbyname(hostname)) == 0) {
-        perror("gethostbyname");
-        exit(1);
-    }
     memset(&address, 0, sizeof(address));
     address.sin_family = AF_INET;
-    address.sin_addr.s_addr = ((struct in_addr *)(host->h_addr_list[0]))->s_addr;
+    address.sin_addr.s_addr = inet_addr(addr);
     address.sin_port = htons(port);
+
     if ((sd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
         perror("socket");
         exit(1);
@@ -251,15 +248,15 @@ void client_stop() {
     if (!client_enabled) {
         return;
     }
-    running = 0;
+    // running = 0;
     close(sd);
     // if (thrd_join(recv_thread, NULL) != thrd_success) {
     //     perror("thrd_join");
     //     exit(1);
     // }
     // mtx_destroy(&mutex);
-    qsize = 0;
-    free(queue);
+    // qsize = 0;
+    // free(queue);
     // printf("Bytes Sent: %d, Bytes Received: %d\n",
     //     bytes_sent, bytes_received);
 }

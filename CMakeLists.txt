@@ -13,7 +13,7 @@ add_executable(
     deps/sqlite/sqlite3.c
     deps/tinycthread/tinycthread.c)
 
-add_definitions(-std=c99 -O3)
+add_definitions(-std=c99 -O3 -DCURL_STATICLIB)
 
 add_subdirectory(deps/glfw)
 include_directories(deps/glew/include)
@@ -25,9 +25,9 @@ include_directories(deps/tinycthread)
 
 if(MINGW)
     set(CMAKE_LIBRARY_PATH ${CMAKE_LIBRARY_PATH}
-        "C:/Program Files/CURL/lib" "C:/Program Files (x86)/CURL/lib")
+        "D:/Program Files/CURL/lib")
     set(CMAKE_INCLUDE_PATH ${CMAKE_INCLUDE_PATH}
-        "C:/Program Files/CURL/include" "C:/Program Files (x86)/CURL/include")
+        "D:/Program Files/CURL/include")
 endif()
 
 find_package(CURL REQUIRED)

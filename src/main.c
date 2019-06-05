@@ -1,6 +1,15 @@
+#ifdef _WIN32
+    #include <winsock2.h>
+    #include <windows.h>
+    #define close closesocket
+    #define sleep Sleep
+#else
+    #include <netdb.h>
+    #include <unistd.h>
+#endif
+
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
-#include <curl/curl.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -523,6 +532,32 @@ Player *player_crosshair(Player *player) {
         }
     }
     return result;
+}
+
+
+#define MAX_UPLOAD_BUFFER 2048
+char upload_buffer[MAX_UPLOAD_BUFFER];
+
+void upload_current_world() {
+    printf("upload:\n");
+    client_enable();
+    client_connect("183.173.109.85", 8081);
+
+    int upload_index = 0;
+    for (int i = 0; i < g->chunk_count; i++) {
+        Chunk *chunk = g->chunks + i;
+        Map *map = &(chunk->map);    
+        MAP_FOR_EACH(map, ex, ey, ez, ew) {
+            if (ey != 0 && ew > 0) {
+                upload_index += snprintf(&(upload_buffer[0]) + upload_index, MAX_UPLOAD_BUFFER-upload_index, "%d %d %d %d ", ex, ey, ez, ew);
+            }
+        } END_MAP_FOR_EACH;
+    }
+
+    printf("%s\n", upload_buffer);
+    client_send(upload_buffer);
+    client_stop();
+    client_disable();
 }
 
 Chunk *find_chunk(int p, int q) {
@@ -2181,6 +2216,11 @@ void on_key(GLFWwindow *window, int key, int scancode, int action, int mods) {
     if (action == GLFW_RELEASE) {
         return;
     }
+    
+    if (key == CRAFT_KEY_UPLOAD && action == GLFW_PRESS) {
+        upload_current_world();
+    }
+
     if (key == GLFW_KEY_BACKSPACE) {
         if (g->typing) {
             int n = strlen(g->typing_buffer);
@@ -2585,9 +2625,13 @@ void reset_model() {
 
 int main(int argc, char **argv) {
     // INITIALIZATION //
-    curl_global_init(CURL_GLOBAL_DEFAULT);
     srand(time(NULL));
     rand();
+	WORD sockVersion = MAKEWORD(2, 2);
+	WSADATA wsaData;
+	if (WSAStartup(sockVersion, &wsaData) != 0) {
+		return -1;
+	}
 
     // WINDOW INITIALIZATION //
     if (!glfwInit()) {
@@ -2742,13 +2786,13 @@ int main(int argc, char **argv) {
         }
 
         // CLIENT INITIALIZATION //
-        if (g->mode == MODE_ONLINE) {
-            client_enable();
-            client_connect(g->server_addr, g->server_port);
-            client_start();
-            client_version(1);
-            login();
-        }
+        // if (g->mode == MODE_ONLINE) {
+        //     client_enable();
+        //     client_connect(g->server_addr, g->server_port);
+        //     client_start();
+        //     client_version(1);
+        //     login();
+        // }
 
         // LOCAL VARIABLES //
         reset_model();
@@ -2958,6 +3002,5 @@ int main(int argc, char **argv) {
     }
 
     glfwTerminate();
-    curl_global_cleanup();
     return 0;
 }
