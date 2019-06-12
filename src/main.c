@@ -537,11 +537,21 @@ Player *player_crosshair(Player *player) {
 
 #define MAX_UPLOAD_BUFFER 2048
 char upload_buffer[MAX_UPLOAD_BUFFER];
+char ip[20];
+int port;
+
+void read_net_config_from_file() {
+    FILE *f = fopen("mc.conf", "r");
+    int ip0, ip1, ip2, ip3;
+    fscanf(f, "%d.%d.%d.%d:%d", &ip0, &ip1, &ip2, &ip3, &port);
+    printf("%d %d %d %d %d\n", ip0, ip1, ip2, ip3, port);
+    sprintf(ip, "%d.%d.%d.%d", ip0, ip1, ip2, ip3);
+}
 
 void upload_current_world() {
     printf("upload:\n");
     client_enable();
-    client_connect("183.173.109.85", 8081);
+    client_connect(ip, port);
 
     int upload_index = 0;
     for (int i = 0; i < g->chunk_count; i++) {
@@ -2625,6 +2635,7 @@ void reset_model() {
 
 int main(int argc, char **argv) {
     // INITIALIZATION //
+    read_net_config_from_file();
     srand(time(NULL));
     rand();
 	WORD sockVersion = MAKEWORD(2, 2);
